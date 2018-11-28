@@ -14,3 +14,15 @@
 <pre> d ##class(%ZDev.Server).Stop(6000) </pre>
 
 Пример использования находится в пакете %ZDev.Demo (%ZDev.XML)
+
+<h3>Копировать глобал с удалённой БД</h3>
+ <pre>
+	s ConnectObject=##class(%ZDev.Client).%New()
+   if obj.Connect("test1234",6030,"_SYSTEM","SYS","USER",.Error)=1 {
+       d ConnectObject.ImportGlobal( "^Refs.AllBazeD", .Error ,1)
+    } else{
+	  zw Error	
+	}
+	d ConnectObject.DisConnect()
+	s obj=""
+  </pre>
