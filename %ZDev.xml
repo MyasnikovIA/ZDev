@@ -1,0 +1,1411 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Export generator="Cache" version="25" zv="Cache for Windows (x86-64) 2017.2 (Build 651)" ts="2018-11-28 07:09:39">
+<Class name="%ZDev.Admin.ImportGlobal">
+<Description>
+d ##class(%ZDev.Admin.ImportGlobal).run()</Description>
+<Super>%RegisteredObject</Super>
+<TimeChanged>64980,25515.053082</TimeChanged>
+<TimeCreated>64937,42881.374751</TimeCreated>
+
+<Method name="run">
+<ClassMethod>1</ClassMethod>
+<FormalSpec>ServerName="ne1232",NameSpace="Sirena"</FormalSpec>
+<Implementation><![CDATA[
+   	s ConnectObject=##class(%ZDev.Client).%New()
+	if ConnectObject.Connect(ServerName,6030,"_SYSTEM","SYS",NameSpace,.Error)=1 {
+    s Start=$h
+    s DateStart=$p($h,".",1)   
+    s TimeStart=$p($h,".",2)	
+/// Получаем спсиок глобалов на удаленном сервере     	
+    	d ConnectObject.RunClassMethod(##this,"GetGlobalList",.Error) 
+	    s AtEnd=0
+	    s GlobalList=""
+	    while AtEnd=0 {
+	      s str=ConnectObject.ReadLine(.AtEnd,.Error)
+	      continue:$l(str)=0
+	      s GlobalList(str)=""
+	      ; w !,str
+	    }
+/// Загружаем глобалы по одному из ранее полученного списка
+        s globalName=""
+        for {
+	       s globalName=$o(GlobalList(globalName)    )
+	       q:globalName=""
+	       w !,globalName
+	       d ConnectObject.ImportGlobal(globalName,.Error,0)
+        }
+/// -------------------------------------------------------
+        
+    } else{
+	  zw Error	
+	}
+    s DateStop=$p($h,".",1)   
+    s TimeStop=$p($h,".",2)	
+    s Stop=$h
+	w !,"Start:"_$zdt(Start)
+	w !,"Stop:"_$zdt(Stop)
+	d ConnectObject.DisConnect()
+	s ConnectObject=""
+]]></Implementation>
+</Method>
+
+<Method name="GetGlobalList">
+<Implementation><![CDATA[
+	      s gl="^mtempExportGlobalList("_$job_")"
+          s ns=$ZU(5)
+          D GetDirNSP^%SYS.GD(ns,gl) 
+          s GlobalName=""
+          s ind=0
+          for {
+             s GlobalName=$O(@gl@(GlobalName))
+             q:GlobalName=""
+             s isBreak=1
+             s:$e(GlobalName,$l(GlobalName),$l(GlobalName))="D" isBreak=0
+             s:$e(GlobalName,$l(GlobalName),$l(GlobalName))="I" isBreak=0
+             s:$e(GlobalName,1,1)="a" isBreak=0
+             s:$l(GlobalName,"mtemp")>1 isBreak=1
+             s:$l(GlobalName,"%")>1 isBreak=1
+             ; s:$l(GlobalName,".")=1 isBreak=1  
+             if isBreak=1{
+   	            continue
+             }
+             w !,"^"_GlobalName
+          }
+          k @gl
+]]></Implementation>
+</Method>
+</Class>
+
+
+<Class name="%ZDev.Client">
+<Description><![CDATA[
+Получить объект с сервера
+<example>
+    s obj=##class(%ZDev.Client).%New()
+	if obj.Connect("127.0.0.1",6006,"_SYSTEM","SYS",$zU(5))=1 {
+        s tmp=obj.GetObject("Refs.AllBaze",2,"SIRENA",.Error)
+  	    zw tmp
+  	    zw Error
+	}
+ </example>
+Запуск кода класс метода на стороне сервера.
+<br> Код локального класса выгружается на сервер в отдельную MAC программу и выполняется
+<example>
+s obj=##class(%ZDev.Client).%New()
+	if obj.Connect("127.0.0.1",6006,"_SYSTEM","SYS",$zU(5))=1 {
+	
+        d obj.RunClassMethod(##this,"GetTime",$zu(5) ) 
+	        s AtEnd=0
+	        while AtEnd=0 {
+	          s str=obj.ReadLine(.AtEnd)
+	          w !,str
+	        }
+	    }
+ </example>
+ Локальный класс метод для запуска
+ <example>
+  Class User.test2
+  {
+     Method GetTime(Arg1="TestArg") {
+       w $h,!
+       w Arg1,!
+     }
+  }
+ </example>
+ Выполнить SQL запрос на удаленном сервере
+ <example>
+    s obj=##class(%ZDev.Client).%New()
+	if obj.Connect("127.0.0.1",6006,"_SYSTEM","SYS",$zU(5))=1 {
+	       w !,"========== SQL =============",!
+	       s resQieryStatus=obj.SqlExec(, "Select * from Refs.AllBaze ", .Error )
+	       if resQieryStatus=1 {
+		       while obj.SqlNextRaw(, .Error)=1 {
+		          if $l(Error)>0 {
+			         w "Error: "_Error   
+		             q
+		          } 	 
+		          s raw=obj.SqlGetRaw()
+		          zw raw
+		       }  
+	       }
+	       w !,"========== === =============",!
+    }
+ </example>	  
+
+Импортировать глобал с сервера
+<example>
+  s obj=##class(%ZDev.Client).%New()
+  if obj.Connect("ne1234",6030,"IRISUserDev","SYS","Sirena",.Error)=1 {
+	    d obj.ImportGlobal("^Refs.AllBazeD","Sirena", .Error)
+	    zw Error
+  }
+ </example>]]></Description>
+<Super>%RegisteredObject</Super>
+<TimeChanged>64960,54822.900483</TimeChanged>
+<TimeCreated>64933,54066.347155</TimeCreated>
+
+<Property name="LastIO">
+<Type>%String</Type>
+<InitialExpression>$IO</InitialExpression>
+</Property>
+
+<Property name="IO">
+<Description>
+Имя устройства обмена данными (клиент)</Description>
+<Type>%String</Type>
+<InitialExpression>"|TCP|2"</InitialExpression>
+</Property>
+
+<Property name="isConnected">
+<Description>
+Признак подключения к серверу</Description>
+<Type>%Library.Boolean</Type>
+<InitialExpression>0</InitialExpression>
+</Property>
+
+<Property name="Host">
+<Description>
+Адрес подключения к серверу ( для клиента )</Description>
+<Type>%String</Type>
+<InitialExpression>"127.0.0.1"</InitialExpression>
+</Property>
+
+<Property name="Port">
+<Description>
+Порт подключения </Description>
+<Type>%String</Type>
+<InitialExpression>6006</InitialExpression>
+</Property>
+
+<Property name="NameSpace">
+<Description>
+Область имен, на которую необходимо переключится при клиенту при подключении</Description>
+<Type>%String</Type>
+<InitialExpression>$ZU(5)</InitialExpression>
+</Property>
+
+<Property name="UserName">
+<Description>
+Адрес подключения к серверу ( для клиента )</Description>
+<Type>%String</Type>
+<InitialExpression>"_SYSTEM"</InitialExpression>
+</Property>
+
+<Property name="UserPass">
+<Description>
+Адрес подключения к серверу ( для клиента )</Description>
+<Type>%String</Type>
+<InitialExpression>"SYS"</InitialExpression>
+</Property>
+
+<Property name="Breack">
+<Type>%Boolean</Type>
+<InitialExpression>0</InitialExpression>
+</Property>
+
+<Property name="TimeOut">
+<Type>%String</Type>
+<InitialExpression>0</InitialExpression>
+</Property>
+
+<Property name="Request">
+<Type>%String</Type>
+</Property>
+
+<Method name="Push">
+<Description>
+Синхронный запрос на сервер</Description>
+<FormalSpec>cmd="",Error=""</FormalSpec>
+<Implementation><![CDATA[
+    s io=$IO
+	q:..isConnected=0 
+    s $ZTRAP="ErrorPush"  
+    u ..IO
+    s res=""
+    try{
+	  USE ..IO 
+      w cmd,*-1,!
+    }CATCH ex{ 
+    }
+    u io
+    q 
+ErrorPush
+    u io
+    s Error=$ZE
+    q
+]]></Implementation>
+</Method>
+
+<Method name="Send">
+<Description>
+Синхронный запрос на сервер</Description>
+<FormalSpec>cmd=""</FormalSpec>
+<ReturnType>%String</ReturnType>
+</Method>
+
+<Method name="Connect">
+<FormalSpec>Host="",Port="",UserName="",UserPass="",NameSpace="",Error=""</FormalSpec>
+<ReturnType>%Boolean</ReturnType>
+<Implementation><![CDATA[
+  s:Host'="" ..Host=Host
+  s:Port'="" ..Port=Port
+  s:UserName'="" ..UserName=UserName
+  s:UserPass'="" ..UserPass=UserPass
+  s:NameSpace'="" ..NameSpace =$ZCVT(NameSpace,"U") 
+  s $ZTRAP="ErrConnect"
+  SET ..isConnected=0
+  SET ..IO="|TCP|2" 
+  CLOSE ..IO
+  OPEN ..IO:(..Host:..Port:"M":/IOTABLE="RAW":/ESCAPE=$C(10) ):5 
+  ; OPEN ..IO:(..Host:..Port:"M"):5 
+  IF ('$TEST) {  s Error="Ошибка при подключении"  q 0 }
+  SET ..isConnected=1
+  USE ..IO 
+  READ ^||XTmp
+  USE ..LastIO
+  try{  
+    d ..Push(..UserName_":"_..UserPass)
+    d ..Push("  w $zu(5,"""_..NameSpace_""")")
+    d ..Push("run")
+    s NameS=..ReadLine()
+    if NameS=..NameSpace {
+      d ..Push("cls")
+      d ..Push("ip")
+      d ..ReadLine()
+    }else{
+	  s Error="Ошибка при переключении области имен:" _NameS
+	  SET ..isConnected=0  
+    }
+  }CATCH ErrorHandle{
+    SET ..isConnected=0 
+  }
+  USE ..LastIO
+  q ..isConnected
+ErrConnect
+  
+  SET ..isConnected=0
+  q 0
+]]></Implementation>
+</Method>
+
+<Method name="DisConnect">
+<Description>
+Отключится от сервера  </Description>
+<Implementation><![CDATA[
+  if ..isConnected=1 {
+    s ..isConnected=0
+    d ..Push("exit")
+    CLOSE ..IO 
+  }
+  q
+]]></Implementation>
+</Method>
+
+<Method name="Read">
+<FormalSpec>Error</FormalSpec>
+<ReturnType>%String</ReturnType>
+<Implementation><![CDATA[
+	s res=""
+    s AtEnd=0,CountLine=0
+ 	while AtEnd=0 {
+ 	    s str=..ReadLine(.AtEnd,.Error)
+ 	    s CountLine=CountLine+1
+ 	    s:CountLine'=1 res=res_$c(10)
+ 	    s res=res_str
+     }
+     k AtEnd,CountLine
+ 	 q res
+]]></Implementation>
+</Method>
+
+<Method name="ReadLine">
+<Description>
+Прочитать Строку из Сокета</Description>
+<FormalSpec>isEndMessage=0,Error=""</FormalSpec>
+<ReturnType>%String</ReturnType>
+<Implementation><![CDATA[
+   s io=$IO
+   if ..isConnected=0  s Error ="Разрыв соединения"  q ""   
+   s $ZTRAP="ErrorRead" 
+   u ..IO
+   s ^||XTmp=""
+   READ ^||XTmp
+   ; while $l(^||XTmp)=0 {
+   ;  READ ^||XTmp:1
+   ; }
+   u io
+   if (^||XTmp[$c(0)),$e(^||XTmp,$l(^||XTmp),$l(^||XTmp))=$c(0) {
+	   s ^||XTmp=$e(^||XTmp,1,$l(^||XTmp)-1)
+	   s isEndMessage=1
+   }
+   q ^||XTmp
+ErrorRead
+   s Error=$ZE
+   s ..isConnected=0 
+   q ""
+]]></Implementation>
+</Method>
+
+<Method name="RunClassMethod">
+<Description><![CDATA[
+Запуск кода класс метода на стороне сервера.
+<br> Код локального класса выгружается на сервер в отдельную MAC программу и выполняется
+<example>
+s obj=##class(%ZDev.Client).%New()
+	if obj.Connect("127.0.0.1",6006,"_SYSTEM","SYS",$zU(5))=1 {
+	
+        d obj.RunClassMethod(##this,"GetTime",$zu(5) ) 
+	        s AtEnd=0
+	        while AtEnd=0 {
+	          s str=obj.ReadLine(.AtEnd)
+	          w !,str
+	        }
+	    }
+ </example>
+ Локальный класс метод
+ <example>
+  Class User.test2
+  {
+     Method GetTime(Arg1="TestArg") {
+       w $h,!
+       w Arg1,!
+     }
+  }
+ </example>]]></Description>
+<FormalSpec>ClassName="",ClassMethodName="",Error="",%args...</FormalSpec>
+<Implementation><![CDATA[
+ ; s ClassName = %args(1)
+ ; s ClassMethodName =""
+ ; s:$Get(%args)>1 GlobalResult = %parm(2)
+   d ..ExecCmd(ClassName, ClassMethodName,1,.Error ,%args...)
+]]></Implementation>
+</Method>
+
+<Method name="ExecClassMethod">
+<FormalSpec>ClassName="",ClassMethodName="",Error="",%args...</FormalSpec>
+<Implementation><![CDATA[   d ..ExecCmd(ClassName, ClassMethodName,0,.Error ,%args...)
+]]></Implementation>
+</Method>
+
+<Method name="ExecCmd">
+<FormalSpec>ClassName="",ClassMethodName="",CreateMac=1,Error="",%args...</FormalSpec>
+<Implementation><![CDATA[
+    q:..isConnected=0 
+    if '$d(^oddDEF(ClassName))  s Error="Не найден класс: "_ClassName_"  в области имен "_$zu(5)  q
+    if '$d(^oddDEF(ClassName,"m",ClassMethodName))  s Error="Метод: "_ClassMethodName_" не найден в классе: "_ClassName_"  в области имен "_$zu(5)  q
+    if '$d(^oddDEF(ClassName,"m",ClassMethodName,30)) s Error="Метод: "_ClassMethodName_" пустой в классе: "_ClassName_"  в области имен "_$zu(5)  q
+    d ..Push("cls")
+    if $d(^oddDEF(ClassName,"m",ClassMethodName,27)) {
+           s arg=^oddDEF(ClassName,"m",ClassMethodName,27)
+           s %args=$Get(%args,0)+1
+           for indArg=1:1:$l(arg,","){
+               s oneArg= $p(arg,",",indArg) 
+               s oneArgNam=$p(oneArg,"=",1)
+               s oneArgVal=""
+               if %args>indArg{
+	              d ..Push( "    s "_oneArgNam_"="""_%args(indArg)_""" " )   
+               }
+           }
+    }
+    s ind=""
+    for {
+	   s ind=$O(^oddDEF(ClassName,"m",ClassMethodName,30,ind))
+	   q:ind=""   
+	   s tmp= ^oddDEF(ClassName,"m",ClassMethodName,30,ind)
+       d ..Push(tmp)  
+    }
+    d:CreateMac=1 ..Push("exec")
+    d:CreateMac'=1 ..Push("run")
+    d ..Push("cls")
+    q
+]]></Implementation>
+</Method>
+
+<Method name="DrawClass">
+<FormalSpec>ClassName=""</FormalSpec>
+<Implementation><![CDATA[
+	       s all(ClassName)=1
+	       s FileName="c:\!"_ClassName_"("_$JOB_").XML"
+	       d $system.OBJ.Export(.all,FileName)
+	       S stream=##class(%FileBinaryStream).%New()
+           S stream.Filename=FileName
+           While 'stream.AtEnd  {
+                s readFrag=stream.Read(32000)
+                w readFrag
+           }
+           d stream.%Close()
+           ; d ##class(%File).Delete(ClassName_"("_$JOB_").XML")
+           ; Do $system.OBJ.Delete(##THIS,"c",.errorlog)
+]]></Implementation>
+</Method>
+
+<Method name="GetClass">
+<FormalSpec>ClassName="",NameSpace="",Error=""</FormalSpec>
+<Implementation><![CDATA[
+	
+	    d ..RunClassMethod(##this,"DrawClass",ClassName,.Error ) 
+	    if $l(Error)=0{
+	       s AtEnd=0
+	       while AtEnd=0 {
+	         s str=..ReadLine(.AtEnd,.Error)
+	         w !,str
+	       }
+	    }
+	    zw Error      
+           
+   /*
+    Do:$zObjClassMethod("%CompiledClass","%ExistsId",ClassName)=1 $system.OBJ.Delete(ClassName)    
+    s tt=##class(%Dictionary.ClassDefinition).%New(ClassName)
+    s tt.Super="%CSP.Page"
+    s tt.Description=""
+    s tt.Super=""
+    s fl=tt.%Save()
+    s tt.Super="%CSP.Page"
+    s tt.Description=""
+    s tt.Super=""
+    s globalName="^oddDEF("""_ClassName_""")"
+    w !,globalName
+    d ..ImportGlobal(globalName, NameSpace, .Error)
+    s fl=tt.%Save()
+    Do $system.OBJ.Compile(ClassName,"cuk /checkuptodate=expandedonly") 
+    */
+    q
+]]></Implementation>
+</Method>
+
+<Method name="GetObject">
+<Description><![CDATA[
+<example>
+s obj=##class(%ZDev.Client).%New()
+	if obj.Connect("127.0.0.1",6006,"_SYSTEM","SYS",$zU(5))=1 {
+        s tmp=obj.GetObject("Refs.AllBaze",2,"SIRENA",.Error)
+  	    zw tmp
+  	    zw Error
+	}
+ </example>]]></Description>
+<FormalSpec>ClassName="",ID="",NameSpace="",Error=""</FormalSpec>
+<ReturnType>%Library.DataType</ReturnType>
+<Implementation><![CDATA[
+
+    d ..Push("cls")
+    s cmd="  w $zObjClassMethod(""%CompiledClass"",""%ExistsId"","""_ClassName_""") "
+    if NameSpace'=""{
+        s cmd="  s OldNS=$ZU(5)  d $ZU(5,"""_NameSpace_""")   "_cmd
+    }
+    
+    d ..Push(cmd)
+    d ..Push("run")
+    if ..Read()=0 {
+	     s Error="Ошибка: Класс "_ClassName_" не обнаружен. " 
+   
+    }else{
+       if $zObjClassMethod("%CompiledClass","%ExistsId",ClassName)=1 {
+	      s cmd="   s GetObjectOne=##class("""_ClassName_""").%OpenId("""_ID_""")    do ##class(%ZEN.Auxiliary.jsonProvider).%ObjectToJSON(GetObjectOne,,,""aelotw"")   "
+	      d ..Push("cls"),..Push(cmd),..Push("run")
+	      s json=..Read()
+	      do ##class(%ZEN.Auxiliary.jsonProvider).%ConvertJSONToObject(json,ClassName,.override,1)
+        }else{  
+          s cmd="   s GetObjectOne=##class("""_ClassName_""").%OpenId("""_ID_""")    do ##class(%ZEN.Auxiliary.jsonProvider).%ObjectToJSON(GetObjectOne,,,""aelotw"")    "
+          d ..Push("cls"),..Push(cmd),..Push("run")
+          s json=..Read()
+          do ##class(%ZEN.Auxiliary.jsonProvider).%ConvertJSONToObject(json,,.override,1)
+        }
+    }
+    q:Error="" override
+    q ""
+]]></Implementation>
+</Method>
+
+<Method name="SqlExec">
+<Description><![CDATA[
+ Выполнить SQL запрос на удаленном сервере
+ <example>
+    s obj=##class(%ZDev.Client).%New()
+	if obj.Connect("127.0.0.1",6006,"_SYSTEM","SYS",$zU(5))=1 {
+	       w !,"========== SQL =============",!
+	       s resQieryStatus=obj.SqlExec(, "Select * from Refs.AllBaze ", .Error )
+	       if resQieryStatus=1 {
+		       while obj.SqlNextRaw(, .Error)=1 {
+		          if $l(Error)>0 {
+			         w "Error: "_Error   
+		             q
+		          } 	 
+		          s raw=obj.SqlGetRaw()
+		          zw raw
+		       }  
+	       }
+	       w !,"========== === =============",!
+    }
+ </example>	  ]]></Description>
+<FormalSpec>SqlObjectName="",SqlStr,Error="",%parm...</FormalSpec>
+<ReturnType>%Library.Boolean</ReturnType>
+<Implementation><![CDATA[
+  if SqlObjectName="" s SqlObjectName="DataSet"
+  s cmd=""
+  s cmd=cmd_"   s SqlStr="""_$zcvt($zcvt( SqlStr,"o","UTF8"),"o","URL")_"""     "
+  s cmd=cmd_"   s SqlStr= $zcvt(SqlStr,""I"",""URL"")        "
+  s cmd=cmd_"   s SqlStr= $zcvt(SqlStr,""I"",""UTF8"")        "
+  s cmd=cmd_"   s SQL"_SqlObjectName_"=##class(%SQL.Statement).%New()  "
+  s cmd=cmd_"   s qStatus"_SqlObjectName_" = SQL"_SqlObjectName_".%Prepare(SqlStr)    "
+  s cmd=cmd_"   if qStatus"_SqlObjectName_"'=1 {DO $System.Status.DisplayError(qStatus"_SqlObjectName_")    }else { w 1}  "
+   s ^||srgTxt=""
+   for tPtr = 1:1:$Get(%parm) {
+      s:tPtr'=1 ^||srgTxt=^||srgTxt_","
+      d ..Push("   s ArgOne"_tPtr_"="_%parm(tPtr)_"    ",.Error)
+      s ^||srgTxt=^||srgTxt_"ArgOne"_tPtr_" "
+   }
+  s cmd=cmd_"   s "_SqlObjectName_"=SQL"_SqlObjectName_".%Execute("_^||srgTxt_")  "
+  s cmd=cmd_"   s Q"_SqlObjectName_"="_SqlObjectName_".%GetMetaData()  "
+  k ^||srgTxt
+  d ..Push("cls",.Error),..Push(cmd,.Error),..Push("run",.Error)
+  s resQuery=..Read(.Error)
+  ; w "resQuery "_resQuery
+  if (resQuery=1){
+     q 1	 
+  }
+  s Error=resQuery
+  k resQuery                  
+  q 0
+]]></Implementation>
+</Method>
+
+<Method name="SqlNextRaw">
+<Description>
+Переключить запись в таблице на следующую после  выполненого SQL запроса</Description>
+<FormalSpec>SqlObjectName="",Error=""</FormalSpec>
+<ReturnType>%Boolean</ReturnType>
+<Implementation><![CDATA[
+
+  if SqlObjectName="" s SqlObjectName="DataSet"
+  s cmd=" try {  w "_SqlObjectName_".%Next()  }CATCH ErrorHandle{  zw ErrorHandle }"
+  d ..Push("cls",.Error),..Push(cmd,.Error),..Push("run",.Error)
+  s ^||resSqlNextRaw=..Read(.Error)
+  if ^||resSqlNextRaw'="0",^||resSqlNextRaw'="1" {
+    s Error=^||resSqlNextRaw
+    q ""
+  }
+  s ^||resSqlNextRaw=+^||resSqlNextRaw
+  q ^||resSqlNextRaw
+]]></Implementation>
+</Method>
+
+<Method name="SqlGetRaw">
+<Description>
+Получить строку записей в из резултата SQL запроса
+Если возвращается значение -1 , значит произошла ошибка при инициализации объекта</Description>
+<FormalSpec>SqlObjectName="",Error=""</FormalSpec>
+<ReturnType>%ZEN.proxyObject</ReturnType>
+<Implementation><![CDATA[
+    if SqlObjectName="" s SqlObjectName="DataSet"
+    s cmd=" for ColNum=1:1:Q"_SqlObjectName_".columnCount { s val="_SqlObjectName_".%GetData(ColNum) s nam=Q"_SqlObjectName_".columns.GetAt(ColNum).colName   w $ZCVT($ZCVT(nam,""O"",""CP1251""),""O"",""JS"")_$c(9)_$ZCVT($ZCVT(val,""O"",""CP1251""),""O"",""JS"")_""{{RAW}}""   }"
+    d ..Push("cls",.Error),..Push(cmd,.Error),..Push("run",.Error)
+    s res=""
+    s AtEnd=0,CountLine=0
+    s arr=##class(%ZEN.proxyObject).%New()
+ 	while AtEnd=0 {
+ 	    s str=..ReadLine(.AtEnd,.Error)
+ 	    continue:$l(str)=0
+ 	    ; w !,str
+ 	    for ind=1:1:$l(str,"{{RAW}}"){
+           s ^||namSqlGetRaw=$zcvt($zcvt(  $p( $p(str,"{{RAW}}",ind) ,$c(9) , 1) ,"I","JS"),"I","CP1251")
+           s ^||valSqlGetRaw=$zcvt($zcvt(  $p( $p(str,"{{RAW}}",ind) ,$c(9) , 2) ,"I","JS"),"I","CP1251")
+ 	       continue:$l(^||namSqlGetRaw)=0
+ 	       try {
+              s arr.%data(^||namSqlGetRaw)=^||valSqlGetRaw
+           }CATCH ErrorHandle{ 
+             s Error=ErrorHandle
+             s arr=-1
+             q
+           }  
+        }
+ 	 }
+     k AtEnd,CountLine
+     q arr
+]]></Implementation>
+</Method>
+
+<Method name="ImportGlobal">
+<Description><![CDATA[
+<example>
+  s obj=##class(%ZDev.Client).%New()
+  if obj.Connect("ne1234",6030,"IRISUserDev","SYS","Sirena",.Error)=1 {
+	    d obj.ImportGlobal("^Refs.AllBazeD","Sirena", .Error)
+	    zw Error
+  }
+ </example>]]></Description>
+<FormalSpec>GlobalName="",Error="",debug=0</FormalSpec>
+<Implementation><![CDATA[
+	    s cmd="  zw "_GlobalName_"   "
+        d ..Push("cls")
+   	    d ..Push(cmd)
+   	    d ..Push("run")
+        s Line=""
+        s AtEnd=0,count=0
+	    while AtEnd=0 {
+	      s strTmp=..ReadLine(.AtEnd,.Error)
+	      if $l(Error)'=0  q
+	      continue:$l(strTmp)=0
+	      s count=count+1
+	      s strTmp=$replace(strTmp,$c(27)_"[1m","")
+	      s strTmp=$replace(strTmp,$c(27)_"[m","")
+	      w:debug'=0 !,"s "_$zcvt(strTmp,"I","CP1251")
+	      x "s "_$zcvt(strTmp,"I","CP1251")
+	    }
+	    q
+]]></Implementation>
+</Method>
+
+<Method name="GetDir">
+<FormalSpec>Dir="C:\!!Git\"</FormalSpec>
+<ProcedureBlock>0</ProcedureBlock>
+<ClientMethod>1</ClientMethod>
+<Implementation><![CDATA[
+   s dd=$$GetDirCSP(Dir)
+   q
+GetDirCSP(Dir)   ; s dd=$$GetDirCSP^test2("C:\!!Git\")
+ n name,filter,rs
+ s filter=""
+ s rs = ##class(%Library.ResultSet).%New("%Library.File:FileSet")
+ s sc = rs.Execute(Dir,filter,"Name")
+ while rs.Next()
+ {
+     s name = rs.Get("Name")
+     if (rs.Get("Type") = "D")
+     {
+        s txt=$$GetDirCSP(name)
+     }else{
+	     w !,name
+	 }
+  }
+  q ""
+]]></Implementation>
+</Method>
+
+<Method name="CopyDir">
+<FormalSpec>DirPathSrc="",DirPathDst="",Error="",Debug=0</FormalSpec>
+<ReturnType>%Boolean</ReturnType>
+<Implementation><![CDATA[
+	     ; s DirPathSrc="D:\Distrib\del\"
+	     ; s DirPathDst="C:\!!!!!!!!!!!!!!!\17-10-2018\"
+         s FileList=""
+         d ..RunClassMethod("%ZDev.Client","GetDir",.Error,DirPathSrc ) 
+         if $l(Error)>0   q 0
+         s AtEnd=0,count=0
+	     while AtEnd=0 {
+	        s strTmp=..ReadLine(.AtEnd,.Error)
+	        if $l(Error)'=0  q
+	        continue:$l(strTmp)=0
+	        s FileList(strTmp)=""
+	     }
+	     s fileName=""
+	     for {
+		   s fileName=$o(FileList(fileName))
+		   q:fileName=""
+		   s SubPath=$e(fileName,$l(DirPathSrc),$l(fileName))
+		   s DstFile=$replace(DirPathDst_""_SubPath,"\\","\")
+		   s newDir=$e(DstFile,1,$l(DstFile)-$l( $p(DstFile,"\",$l(DstFile,"\"))))
+		   if Debug'=0 {
+		      w !,"==================="
+		      w !,"Src file: "_fileName
+		      w !,"Dst file: "_DstFile
+		      w !,"Dst dir : "_newDir
+		   }
+		   if ( '##class(%File).DirectoryExists(newDir) ) { do ##class(%File).CreateDirectoryChain(newDir) }
+		   d ..CopyFile(fileName,DstFile,.Error)
+		   q:$l(Error)'=0
+	     }
+	     q:$l(Error)=0 1
+         q 0
+]]></Implementation>
+</Method>
+
+<Method name="CopyFile">
+<FormalSpec>FileNameFromSrv="",FileNameToLocal="",Error="",Debug=0</FormalSpec>
+<ReturnType>%Boolean</ReturnType>
+<Implementation><![CDATA[
+         ; s FileNameFromSrv="d:\Distr\putty.exe"
+	     ; s FileNameToLocal="C:\!!!!!!!!!!!!!!!\16-10-2018\putty_TEST2.exe"
+	     d ..RunClassMethod("%ZDev.Client","DrawFile",.Error,FileNameFromSrv ) 
+	     if $l(Error)>0   q 0
+         s file=##class(%File).%New(FileNameToLocal)
+   	     d file.Open("NWS",5)
+   	     if file.IsOpen=1 {
+		    s AtEnd=0
+            s count=0
+  	        while AtEnd=0 {
+	           s CopyFileLine=..ReadLine(.AtEnd,.Error)
+	           if $l(Error)'=0  q
+	           s CopyFileLine=$System.Encryption.Base64Decode(CopyFileLine)
+	           if Debug'=0{ 
+	              w CopyFileLine
+	           }
+	           d file.Write(CopyFileLine)
+	        }
+            d file.SaveStream()
+            d file.Close()
+   	     }else{
+	   	    s Error="Ошибка открытия файла для записи: "_FileNameToLocal
+   	     }
+         /*
+         s LastIO=$IO
+         open FileNameToLocal:"WNS":1
+	     s AtEnd=0
+         s count=0
+  	     while AtEnd=0 {
+	        s str=..ReadLine(.AtEnd,.Error)
+	        if $l(Error)'=0  q
+            u FileNameToLocal
+	        w $System.Encryption.Base64Decode(str)
+	     }
+         c FileNameToLocal
+         u LastIO
+         */
+         q:$l(Error)=0 1
+         q 0
+]]></Implementation>
+</Method>
+
+<Method name="DrawFile">
+<FormalSpec>FileName=""</FormalSpec>
+<Implementation><![CDATA[
+	  q:##class(%File).Exists(FileName)=0
+	  S stream=##class(%FileBinaryStream).%New()
+      S stream.Filename=FileName
+      While 'stream.AtEnd  {
+        w $System.Encryption.Base64Encode(stream.Read(16000))_$c(10)
+      }
+      d stream.%Close()
+      s stream=""
+      ; d ##class(%File).Delete(FileName)
+]]></Implementation>
+</Method>
+
+<Method name="ImportClass">
+<FormalSpec>ClassName="",Error="",Debug=0</FormalSpec>
+<Implementation><![CDATA[
+	   ; s ClassName="Developper.UtilTools.ClassFromDir"
+	   s IsClassExist=0
+       s ProcedureBlock=""
+       if $zObjClassMethod("%CompiledClass","%ExistsId",ClassName)=1 {
+	     s tt=##class(%Dictionary.ClassDefinition).%OpenId(ClassName)
+	     if $d(^oddDEF(ClassName,46)){
+	       s ProcedureBlock=^oddDEF(ClassName,46)
+         } 
+	     s IsClassExist=1
+	     d $system.OBJ.Delete(ClassName) s tt=##class(%Dictionary.ClassDefinition).%New(ClassName)   
+	   
+       }else{
+	     s tt=##class(%Dictionary.ClassDefinition).%New(ClassName)  
+       } 
+       s tt.Description=$ZDT($h)
+       s tt.Description=""
+       s tt.ProcedureBlock=1
+       d tt.%Save()
+       s globalName="^oddDEF("""_ClassName_""")"
+       d ..ImportGlobal(globalName,.Error,Debug)
+       ; ProcedureBlock
+       if $d(^oddDEF(ClassName,46)){
+	       s ^oddDEF(ClassName,46)=ProcedureBlock
+	       if ^oddDEF(ClassName,46)=1{
+		    k ^oddDEF(ClassName,46)   
+	       }
+       }
+	   d tt.%Save()
+]]></Implementation>
+</Method>
+
+<Method name="ImportRoutine">
+<FormalSpec>RoutineName="",Error="",Debug=0</FormalSpec>
+<ReturnType>%Boolean</ReturnType>
+<Implementation><![CDATA[
+         ; s Debug=1
+		 ; s RoutineName="test.mac"
+         s RoutineRash=$zcvt($p(RoutineName,".",$l(RoutineName,".")),"U")
+		 s RoutineOneName= $e(RoutineName,1,$l(RoutineName)-$l(RoutineRash)-1)
+         if ##class(%Routine).Exists(RoutineName)=1{
+            s routine=##class(%Routine).%OpenId(RoutineName) 
+		 }else{
+			s routine=##class(%Routine).%New(RoutineName) 
+		 }
+		 s tmp=routine.RoutineName
+		 s routine.RoutineName=""
+		 s routine.RoutineName=tmp
+		 d routine.%Save()
+		 d ..ImportGlobal( "^r"_routine.RoutineType_"("""_RoutineOneName_""")", .Error ,Debug)
+		 /*
+		 ; routine.RoutineType="MAC" 
+         ; routine.RoutineType="INC" 
+         ; routine.RoutineType="INT" 
+     	 if RoutineRash="MAC" {
+            d ..ImportGlobal( "^rMAC("""_RoutineOneName_""")", .Error ,Debug)
+		 }
+		 if RoutineRash="INT" {
+            d ..ImportGlobal( "^rINT("""_RoutineOneName_""")", .Error ,Debug)
+		 }
+		 if RoutineRash="INC" {
+            d ..ImportGlobal( "^rINC("""_RoutineOneName_""")", .Error ,Debug)
+		 }
+		 */
+	     q:$l(Error)'=0 0
+	     d routine.%Save()
+         q 1
+]]></Implementation>
+</Method>
+</Class>
+
+
+<Class name="%ZDev.Demo.demo1EcecCmd">
+<Description>
+d ##class(%ZDev.Demo.demo1EcecCmd).run()</Description>
+<Super>%RegisteredObject</Super>
+<TimeChanged>64959,28959.557585</TimeChanged>
+<TimeCreated>64935,35249.814269</TimeCreated>
+
+<Method name="run">
+<ClassMethod>1</ClassMethod>
+<Implementation><![CDATA[
+	; ne1233:6040  - 10.100.12.34
+	; ne150 :6030  - 10.100.12.11
+	; ne1234:6030  - 10.100.12.21
+	; ne1232:6030  - 10.100.12.23
+	; nsk-s-zhkh:6030-10.100.12.31
+
+	s obj=##class(%ZDev.Client).%New()
+	
+	// if obj.Connect("ne140",6030,"_SYSTEM","SYS","Sirena",.Error)=1 {
+	// if obj.Connect("ne1232",6030,"IRISUserDev","IRISUserDev","Sirena",.Error)=1 {
+    // if obj.Connect("10.100.12.31",6030,"IRISUserDev","IRISUserDev","FIAS",.Error)=1 {
+	if obj.Connect("nsk-s-zhkh",6030,"IRISUserDev","IRISUserDev","FIAS",.Error)=1 {
+	    d obj.Push("ip")
+        w !,obj.ReadLine()
+        d obj.Push(" w ""_1111111_""_$ZDT($h)")
+        d obj.Push("run")
+        s str=obj.Read()
+        w !,str
+	}else{
+	  zw Error	
+	}
+	d obj.DisConnect()
+	s obj=""
+]]></Implementation>
+</Method>
+</Class>
+
+
+<Class name="%ZDev.Demo.demo2RunMethod">
+<Description>
+d ##class(%ZDev.Demo.demo2RunMethod).run()</Description>
+<Super>%RegisteredObject</Super>
+<TimeChanged>64972,39549.438318</TimeChanged>
+<TimeCreated>64935,35400.740092</TimeCreated>
+
+<Method name="run">
+<ClassMethod>1</ClassMethod>
+<Implementation><![CDATA[
+	s obj=##class(%ZDev.Client).%New()
+    if obj.Connect("ne1234",6030,"IRISUserDev","SYS","Sirena",.Error)=1 {
+	   
+	    d obj.RunClassMethod(##this,"GetTime",.Error,$zu(5) ) 
+	    s AtEnd=0
+	    while AtEnd=0 {
+	      s str=obj.ReadLine(.AtEnd,.Error)
+	      w !,str
+	    }
+	    zw Error
+	    
+	}else{
+	  zw Error	
+	}
+	d obj.DisConnect()
+	s obj=""
+]]></Implementation>
+</Method>
+
+<Method name="GetTime">
+<FormalSpec>Arg1="TestArg"</FormalSpec>
+<Implementation><![CDATA[
+   
+     s ^Refs.AllBazeD=12
+     s ^Refs.AllBazeD(1)=$lb("","Новосибирск","10.100.12.11","ne150.ne.ru","")
+     s ^Refs.AllBazeD(2)=$lb("","Приобское","10.100.12.13","ne145.ne.ru","")
+     s ^Refs.AllBazeD(3)=$lb("","Куйбышев","10.100.12.14","ne140.ne.ru","")
+     s ^Refs.AllBazeD(4)=$lb("","Энергетик","10.100.12.26","ne4293.ne.ru","")
+     s ^Refs.AllBazeD(7)=$lb("","Бийск","10.100.12.46","ne2308.ne.ru","")
+     s ^Refs.AllBazeD(8)=$lb("","Новосибирск","10.100.12.21","ne1234.ne.ru","TEST")
+     s ^Refs.AllBazeD(9)=$lb("","Бийск","10.100.12.47","ne2310.ne.ru","TEST")
+     s ^Refs.AllBazeD(10)=$lb("","Куйбышев","","ne1233.ne.ru","TEST")
+     s ^Refs.AllBazeD(11)=$lb("","Красноярск","","ne1232.ne.ru","TEST")
+     s ^Refs.AllBazeD(12)=$lb("","Красноярск","10.251.14.109","PDC-SIRIUS-KRK.sibgenco.local","")
+
+     s ^Refs.AllBazeI("DNS"," NE1232",11)=""
+     s ^Refs.AllBazeI("DNS"," NE1233",10)=""
+     s ^Refs.AllBazeI("DNS"," PDC-SIRIUS-KRK.SIBGENCO.LOCAL",12)=""
+     s ^Refs.AllBazeI("IP"," ",10)=""
+     s ^Refs.AllBazeI("IP"," ",11)=""
+     s ^Refs.AllBazeI("IP"," 10.251.14.109",12)=""
+
+    w $h,!
+    w Arg1,!
+    w $ZU(110),!
+]]></Implementation>
+</Method>
+</Class>
+
+
+<Class name="%ZDev.Demo.demo3GetObject">
+<Description>
+d ##class(%ZDev.Demo.demo3GetObject).run()</Description>
+<Super>%RegisteredObject</Super>
+<TimeChanged>64935,71974.366882</TimeChanged>
+<TimeCreated>64935,35475.143746</TimeCreated>
+
+<Method name="run">
+<ClassMethod>1</ClassMethod>
+<Implementation><![CDATA[
+	s obj=##class(%ZDev.Client).%New()
+	if obj.Connect("192.168.1.100",6006,"_SYSTEM","SYS","USER",.Error)=1 {
+	   s tmp=obj.GetObject("Refs.AllBaze",2,"SIRENA",.Error)
+	    zw tmp
+	    zw Error
+	}else{
+	  zw Error	
+	}
+	d obj.DisConnect()
+	s obj=""
+]]></Implementation>
+</Method>
+</Class>
+
+
+<Class name="%ZDev.Demo.demo4SqlQuery">
+<Description>
+d ##class(%ZDev.Demo.demo4SqlQuery).run()</Description>
+<Super>%RegisteredObject</Super>
+<TimeChanged>64960,55992.811701</TimeChanged>
+<TimeCreated>64935,35671.781892</TimeCreated>
+
+<Method name="run">
+<ClassMethod>1</ClassMethod>
+<Implementation><![CDATA[
+	s obj=##class(%ZDev.Client).%New()
+	// if obj.Connect("192.168.1.100",6006,"_SYSTEM","SYS","USER",.Error)=1 {
+	if obj.Connect("nsk-s-zhkh",6030,"IRISUserDev","IRISUserDev","FIAS",.Error)=1 {		
+	    w !,"========== SQL =============",!
+	     ; s resQieryStatus=obj.SqlExec(,"call FIAS_Search.House_ByAOGuidWithNum('fa4b8fdc-0185-473c-b316-7f4c5072b1cb', '208')", .Error )
+	    s SQLTxt=" select top 10  AOGUID,SHORTNAME from FIAS.Object  where ACTSTATUS = 1  and AOLEVEL = 7 and REGIONCODE ='54'   and SHORTNAME = 'ул' "
+        ; s SQLTxt="call FIAS_Search.AddressObject_ByQNameWithLevel('54',7 , 'рылеева', 'ул' )"
+	    s resQieryStatus=obj.SqlExec(,SQLTxt, .Error )
+	    if resQieryStatus=1 {
+		   while obj.SqlNextRaw(, .Error)=1 {
+		     if $l(Error)>0 {
+			   w "Error: "_Error   
+		       q
+		     } 	 
+		     s raw=obj.SqlGetRaw()
+		     zw raw
+		   }  
+		 }
+	    
+	    zw Error
+	    w !,"========== === =============",!
+	}else{
+	  zw Error	
+	}
+	d obj.DisConnect()
+	s obj=""
+]]></Implementation>
+</Method>
+</Class>
+
+
+<Class name="%ZDev.Demo.demo5CopyGlobal">
+<Description>
+d ##class(%ZDev.Demo.demo5CopyGlobal).run()</Description>
+<Super>%RegisteredObject</Super>
+<TimeChanged>64937,51737.629879</TimeChanged>
+<TimeCreated>64935,38007.667599</TimeCreated>
+
+<Method name="run">
+<ClassMethod>1</ClassMethod>
+<Implementation><![CDATA[
+	
+	s ConnectObject=##class(%ZDev.Client).%New()
+   if ConnectObject.Connect("ne1234",6030,"IRISUserDev","SYS","Sirena",.Error)=1 {
+       d ConnectObject.ImportGlobal( "^Refs.AllBazeD", .Error ,1)
+    } else{
+	  zw Error	
+	}
+	d ConnectObject.DisConnect()
+	s obj=""
+]]></Implementation>
+</Method>
+</Class>
+
+
+<Class name="%ZDev.Demo.demo6CopyClass">
+<Description>
+d ##class(%ZDev.Demo.demo6CopyClass).run()</Description>
+<Super>%RegisteredObject</Super>
+<TimeChanged>64937,60253.053082</TimeChanged>
+<TimeCreated>64935,67291.868626</TimeCreated>
+
+<Method name="run">
+<ClassMethod>1</ClassMethod>
+<Implementation><![CDATA[
+   	s ConnectObject=##class(%ZDev.Client).%New()
+	if ConnectObject.Connect("ne1234",6030,"IRISUserDev","SYS","Sirena",.Error)=1 {
+	   s ClassName="Developper.UtilTools.ClassFromDir"
+
+       d ConnectObject.ImportClass(ClassName, .Error)
+       Do $system.OBJ.Compile(ClassName,"cuk /checkuptodate=expandedonly")
+       zw Error
+	}else{
+	  zw Error	
+	}
+	d ConnectObject.DisConnect()
+	s ConnectObject=""
+]]></Implementation>
+</Method>
+
+<UDLText name="T">
+<Content><![CDATA[
+/*
+Method DrawObject(ClassName = "")
+{
+	       s all(ClassName)=1
+	       s FileName=ClassName_"("_$JOB_").XML"
+           d $system.OBJ.Export(.all,FileName,,,"CP1251")
+	       S stream=##class(%FileBinaryStream).%New()
+           S stream.Filename=FileName
+           While 'stream.AtEnd  {
+                ; s readFrag=stream.Read(32000)
+                s readFrag=stream.ReadLine()
+                w readFrag_"##(13,10)##"
+           }
+           d stream.%Close()
+           d ##class(%File).Delete(FileName)
+}
+
+Method DrawUDL(ClassName = "")
+{
+	       s Rashirenie=$e(ClassName,$l(ClassName)-3,$l(ClassName))
+	       s FileName=ClassName_"("_$JOB_")"_Rashirenie
+	       d $system.OBJ.ExportUDL(ClassName,FileName,"/diffexport",,"CP1251")
+	       S stream=##class(%FileBinaryStream).%New()
+           S stream.Filename=FileName
+           While 'stream.AtEnd  {
+                ; s readFrag=stream.Read(32000)
+                s readFrag=stream.ReadLine()
+                w readFrag_"##(13,10)##"
+           }
+           d stream.%Close()
+           d ##class(%File).Delete(FileName)
+}
+*/
+]]></Content>
+</UDLText>
+</Class>
+
+
+<Class name="%ZDev.Demo.demo7CopyFile">
+<Description>
+d ##class(%ZDev.Demo.demo7CopyFile).run()</Description>
+<Super>%RegisteredObject</Super>
+<TimeChanged>64960,33328.62284</TimeChanged>
+<TimeCreated>64937,56823.693255</TimeCreated>
+
+<Method name="run">
+<ClassMethod>1</ClassMethod>
+<Implementation><![CDATA[
+   	s ConnectObject=##class(%ZDev.Client).%New()
+	if ConnectObject.Connect("nsk-s-zhkh",6030,"IRISUserDev","IRISUserDev","user",.Error)=1 {
+	     
+	     s FileNameFromSrv="c:\InterSystems\Cache\bin\mplayer.exe"
+	     s FileNameToLocal="c:\InterSystems\Cache\bin\mplayer.exe"
+         d ConnectObject.CopyFile(FileNameFromSrv,FileNameToLocal,.Error,1)
+         zw Error
+
+	     s FileNameFromSrv="c:\InterSystems\Cache\bin\mdesigner.exe"
+	     s FileNameToLocal="c:\InterSystems\Cache\bin\mdesigner.exe"
+         d ConnectObject.CopyFile(FileNameFromSrv,FileNameToLocal,.Error,1)
+         zw Error
+         
+	}else{
+	  zw Error	
+	}
+	d ConnectObject.DisConnect()
+	s ConnectObject=""
+]]></Implementation>
+</Method>
+</Class>
+
+
+<Class name="%ZDev.Server">
+<Description>
+  d ##class(%ZDev.Server).Stop()
+  d ##class(%ZDev.Server).Start()</Description>
+<Super>%RegisteredObject</Super>
+<TimeChanged>64959,30207.892279</TimeChanged>
+<TimeCreated>64933,54149.405331</TimeCreated>
+
+<Method name="Help">
+<Description>
+Метод Показывает список команд для этого сервера</Description>
+<ClassMethod>1</ClassMethod>
+<Implementation><![CDATA[
+   w "exit - Отключится от сенрвера (выход)"_$C(10)
+   w "ip   - Показать IP адрес клиента"_$C(10)
+   w "cls  - Очистить буфер команд"_$C(10)
+   w "read - Прочитать буфер"_$C(10)
+   w "run  - Запустить на выполнение команды записанные в буфер"_$C(10)
+   w "help - Показать документацию"_$C(10)
+   w " "_$C(10) 
+   w "Все остальные команды записываются в буфер"
+]]></Implementation>
+</Method>
+
+<Method name="Stop">
+<Description>
+Остановить работу сервера
+ d ##class(%ZDev.Server).Stop()</Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec>port:%Integer=6006</FormalSpec>
+<Implementation><![CDATA[
+    s port=$g(port)
+    if $l(port)>0 d
+    .  s ^%ZDev.Server.Kill(port)=1
+    .  S httprequest=##class(%Net.HttpRequest).%New()
+    .  s httprequest.Server="127.0.0.1"
+    .  s httprequest.Port=port
+    .  s httprequest.Timeout=1
+    .  d httprequest.Get("/")
+    .  s httprequest=""
+    .  w !,"Server "_port_" stoped"
+    .  k ^%ZDev.Server.Kill(port)
+    e  d
+    . s port=""
+    . q:$d(^%ZDev.Server.Kill)
+    . f  s port=$o(^%ZDev.Server.Cfg(port))  q:port=""   d
+    . .  s ^%ZDev.Server.Kill(port)=1
+    . .  S httprequest=##class(%Net.HttpRequest).%New()
+    . .  s httprequest.Server="127.0.0.1"
+    . .  s httprequest.Port=port
+    . .  s httprequest.Timeout=1
+    . .  d httprequest.Get("/")
+    . .  s httprequest=""
+    . .  w !,"Server "_port_" stoped"
+    . k ^%ZDev.Server.Kill
+    q
+]]></Implementation>
+</Method>
+
+<Method name="Start">
+<Description>
+ Запустить работу сервера
+  d ##class(%ZDev.Server).Start()</Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec>port=6006,NameSpace="%SYS"</FormalSpec>
+<Implementation><![CDATA[
+     if $d(^%ZDev.Server.Cfg(port)) d
+     .    d ..Stop(port)
+     .    k ^%ZDev.Server.Cfg(port)
+     .    h 2
+     s ^%ZDev.Server.Cfg(port)=$lb(port,NameSpace,$h,$zchild)
+     job ..startJob(port,NameSpace)
+     w !,"Start socket server:"_port
+     q
+]]></Implementation>
+</Method>
+
+<Method name="startJob">
+<Description>
+Сервер обработки новых соединений</Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec>port,NameSpace</FormalSpec>
+<Implementation><![CDATA[
+     SET port = $G(port)  
+     s NameSpace=$g(NameSpace)
+     zn NameSpace
+     if $d(^%ZDev.Server.Cfg(port)) d
+     .   d ..Stop(port)
+     .   k ^%ZDev.Server.Cfg(port)
+     k ^%ZDev.Server.Kill(port)
+     k ^SocketTemp
+     ; if '$d(^SocketAuthor)  s ^SocketAuthor($system.Encryption.MD5Encode("admin:admin"))=$lb(1,"admin")
+     SET dev="|TCP|1"
+     ; OPEN dev:(:port:"MA"):200
+     OPEN dev:(:port:"MA":/IOTABLE="RAW":/ESCAPE=$C(10) ):200
+     
+     
+     s inData=""
+     s indSrv=0
+     For  USE dev  READ inData  q:($d(^%ZDev.Server.Kill(port)))  Do:$T   
+     .    Use dev
+     .    Job ..childVar(port,NameSpace):(:17::)  ; Concurrent server bit is on
+     .    If $ZCHILD=0 w " Server can't create new JOB!"
+     Close dev   
+     k ^%ZDev.Server.Kill
+      d ..killTempRutine()
+     Quit
+]]></Implementation>
+</Method>
+
+<Method name="childVar">
+<Description>
+обработка плдключенного клиента</Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec>port,NameSpace</FormalSpec>
+<Implementation><![CDATA[
+   s numPac=0
+   s isCloseChaild=0 
+   s SocketTempIndex=0
+   s Begin=""  ; "<C>"
+   s End=$c(0) ; "</C>"
+   s UserName=""
+   s NameSpace=""
+   USE $ZUTIL(53):(::"M")
+   w "UserName:UserPass",End,*-1,!
+   Set I=$ZU(111,0)
+   s ip=$A(I,1)_"."_$A(I,2)_"."_$A(I,3)_"."_$A(I,4)_":"_($A(I,5)*256+$A(I,6))
+   s AllcountLine=0
+   ; работа 
+   For  Q:((isCloseChaild=1)||($T=1))  d
+   .  If $T=1 s isCloseChaild=1  q
+   .  q:isCloseChaild=1 
+   .  S dev=$ZUTIL(53)  
+   .  USE dev:(::"M")  
+   .  READ inData  
+   .   s AllcountLine=AllcountLine+1
+   .   ; s ^%deb($job,AllcountLine)=inData
+   .   ; Читаем первую строку с параметрами авторизации
+   .   if AllcountLine=1 {  
+   .      s UserName=$p(inData,":",1)   
+   .      s UserPass=$p(inData,":",2)   
+   .      if $SYSTEM.Security.Login(UserName,UserPass)'=1 {
+   .         w "Вы непрошли авторизацию",End,*-1,!   
+   .         s isCloseChaild=1
+   .         q     
+   .      }
+   .     k UserName,UserPass
+   .     q
+   .   }
+   .	   
+   .  s inDataSrc=inData
+   .  s isGotoNextReadLine=0
+   .  ;
+   .  ; Обработка входящих сообщений
+   .  if inData="exit"   s isGotoNextReadLine=1   w $JOB_" Disconnect",End,*-1,! s isCloseChaild=1  q ; выход из этого сианса
+   .  if inData="ip"     s isGotoNextReadLine=1   w ip,End,*-1,!   q
+   .  if inData="cls"    s isGotoNextReadLine=1   s SocketTempIndex=0  k ^SocketTemp($job) q
+   .  if inData="help"    s isGotoNextReadLine=1   d ..Help() w End,*-1,!   q
+   .  if inData="read" {
+   .       s isGotoNextReadLine=1  
+   .       s ind="",resCmd=""  for   s ind=$o(^SocketTemp($job,ind))  q:ind=""   s resCmd=resCmd_^SocketTemp($job,ind)  
+   .       w resCmd ,End  w *-1,!   q
+   .  }
+   .  if inData="run" {
+   .       s isGotoNextReadLine=1  
+   .       s ind="",resCmd=""  for   s ind=$o(^SocketTemp($job,ind))  q:ind=""   s resCmd=resCmd_^SocketTemp($job,ind)  
+   .       TRY {   x $tr(resCmd,$c(13,10),"   ")   } CATCH ErrorHandle {    zw ErrorHandle  }
+   .       w End
+   .       w *-1,!  
+   .       q
+   .  }
+   .  if inData="exec" { ; поместить буфер в MAC программу и выполнить её
+   .       s isGotoNextReadLine=1  
+   .       d ..run()
+   .       w End
+   .       w *-1,!  
+   .       q
+   .  }
+   .  q:isGotoNextReadLine=1
+   .
+   .  s SocketTempIndex=SocketTempIndex+1
+   .  s ^SocketTemp($job,SocketTempIndex)=inData
+   Close dev  
+  
+   k ^SocketTemp($job)
+   q
+]]></Implementation>
+</Method>
+
+<Method name="killTempRutine">
+<ClassMethod>1</ClassMethod>
+<Implementation><![CDATA[
+   s OldNameSpace=$zu(5) 
+   For i=1:1:$ZU(90,0)    s tmp=$ZU(90,2,0,i) if $l(tmp)>0  Set nslist(tmp)=""
+   s nameSpase=""
+   For    Set nameSpase=$O(nslist(nameSpase))     Quit:nameSpase=""   d
+   .  ; w nameSpase,!
+   .  d $ZU(5,nameSpase)
+   .  s res=##class(%ResultSet).%New("%Library.Routine:RoutineList")
+   .  d res.Execute("*.MAC,*.INC,*.INT")
+   .  f  q:'res.Next()     d
+   .  .  s isFound=0 , resText=""
+   .  .  s Routine=res.Get("Name")
+   .  .  if $l(Routine,"MSrvTMPFragment")>1 d
+   .  .   .   w Routine,!
+   .  .   .   s routine =##class(%Routine).%New()
+   .  .   .   Do routine.Delete(Routine)
+   d $ZU(5,OldNameSpace)
+]]></Implementation>
+</Method>
+
+<Method name="run">
+<Description>
+запустит код из буфера как MAC программу   </Description>
+<ClassMethod>1</ClassMethod>
+<Implementation><![CDATA[
+      s %gl="^SocketTemp"
+      if '$d(@%gl@($job))    q
+      DO $SYSTEM.Process.NullSubscripts(0)
+      s ^||indBuff=""
+      s routine =##class(%Routine).%New("MSrvTMPFragment"_$JOB_"")
+      Do routine.WriteLine($c(13,10)_" ; d ^MSrvTMPFragment"_$JOB)
+      f   s ^||indBuff=$o(@%gl@($job,^||indBuff))   q:^||indBuff=""   d
+      .    Do routine.WriteLine($c(13,10)_@%gl@($job,^||indBuff))
+      Do routine.WriteLine($c(13,10)_"  q ")
+      Do routine.Save() ;
+      k ^SPOOL($JOB)
+      O 2:($job) 
+      U 2:($job)
+      s $ZTRAP="ErrorCompilMacProgramm"
+      Do routine.Compile() ;
+      c 2:($job)  
+      k ^SPOOL($JOB)
+      Do routine.%Close()
+      
+      USE $ZUTIL(53):(::"M")
+      TRY {
+        x " d ^MSrvTMPFragment"_$JOB 
+        O 2:($job) 
+        U 2:($job)
+        Do routine.Delete("MSrvTMPFragment"_$JOB_".MAC")
+        c 2:($job) 
+        k ^SPOOL($JOB)
+        USE $ZUTIL(53):(::"M")
+      } CATCH ErrorHandle { 
+          w "Error:",$c(13,10)
+          w " NameSpace:"_$zu(5),$c(13,10)
+          w $ZTRAP,$c(13,10)
+          w $ESTACK,$c(13,10)
+          w $ECODE,$c(13,10)
+          w $ZERROR,$c(13,10)
+          ; s ErrorHandle.Location=" d ^MSrvTMPFragment"_$JOB 
+          zw ErrorHandle
+      }
+      q
+ErrorCompilMacProgramm
+      USE $ZUTIL(53):(::"M")
+      w " NameSpace:"_$zu(5),$c(13,10)
+      w $ZTRAP,$c(13,10)
+      w $ESTACK,$c(13,10)
+      w $ECODE,$c(13,10)
+      w $ZERROR,$c(13,10)
+      c 2:($job)  
+      // Do routine.Delete("MSrvTMPFragment"_$JOB_".MAC")
+      q
+]]></Implementation>
+</Method>
+</Class>
+</Export>
