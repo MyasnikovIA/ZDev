@@ -9,9 +9,9 @@
 7) Копировать бинарный файл с локального компьютера на удаленный через Cache'
 
 Запуск сервера:
-<pre> d ##class(%ZDev.Server).Start(6000) </pre>
+<pre> d ##class(%ZDev.Server).Start(6030) </pre>
 Остановка сервера
-<pre> d ##class(%ZDev.Server).Stop(6000) </pre>
+<pre> d ##class(%ZDev.Server).Stop(6030) </pre>
 
 Пример использования находится в пакете %ZDev.Demo (%ZDev.XML)
 
