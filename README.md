@@ -12,3 +12,5 @@
 <pre> d ##class(%ZDev.Server).Start(6000) </pre>
 Остановка сервера
 <pre> d ##class(%ZDev.Server).Stop(6000) </pre>
+
+Пример использования находится в пакете %ZDev.Demo (%ZDev.XML)
