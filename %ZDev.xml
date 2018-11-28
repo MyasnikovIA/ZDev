@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Export generator="Cache" version="25" zv="Cache for Windows (x86-64) 2017.2 (Build 651)" ts="2018-11-28 07:24:47">
+<Export generator="Cache" version="25" zv="Cache for Windows (x86-64) 2017.2 (Build 651)" ts="2018-11-28 08:02:26">
 <Class name="%ZDev.Admin.ImportGlobal">
 <Description>
 d ##class(%ZDev.Admin.ImportGlobal).run()</Description>
@@ -1008,7 +1008,7 @@ d ##class(%ZDev.Demo.demo4SqlQuery).run()</Description>
 <Description>
 d ##class(%ZDev.Demo.demo5CopyGlobal).run()</Description>
 <Super>%RegisteredObject</Super>
-<TimeChanged>64980,26612.383381</TimeChanged>
+<TimeChanged>64980,28861.802215</TimeChanged>
 <TimeCreated>64935,38007.667599</TimeCreated>
 
 <Method name="run">
@@ -1016,13 +1016,13 @@ d ##class(%ZDev.Demo.demo5CopyGlobal).run()</Description>
 <Implementation><![CDATA[
 	
 	s ConnectObject=##class(%ZDev.Client).%New()
-   if obj.Connect("test1234",6030,"_SYSTEM","SYS","USER",.Error)=1 {
+   if ConnectObject.Connect("test1234",6030,"_SYSTEM","SYS","USER",.Error)=1 {
        d ConnectObject.ImportGlobal( "^Refs.AllBazeD", .Error ,1)
     } else{
 	  zw Error	
 	}
 	d ConnectObject.DisConnect()
-	s obj=""
+	s ConnectObject=""
 ]]></Implementation>
 </Method>
 </Class>
@@ -1032,14 +1032,14 @@ d ##class(%ZDev.Demo.demo5CopyGlobal).run()</Description>
 <Description>
 d ##class(%ZDev.Demo.demo6CopyClass).run()</Description>
 <Super>%RegisteredObject</Super>
-<TimeChanged>64980,26626.511612</TimeChanged>
+<TimeChanged>64980,28884.07308</TimeChanged>
 <TimeCreated>64935,67291.868626</TimeCreated>
 
 <Method name="run">
 <ClassMethod>1</ClassMethod>
 <Implementation><![CDATA[
    	s ConnectObject=##class(%ZDev.Client).%New()
-	if obj.Connect("test1234",6030,"_SYSTEM","SYS","USER",.Error)=1 {
+	if ConnectObject.Connect("test1234",6030,"_SYSTEM","SYS","USER",.Error)=1 {
 	   s ClassName="Developper.UtilTools.ClassFromDir"
        d ConnectObject.ImportClass(ClassName, .Error)
        Do $system.OBJ.Compile(ClassName,"cuk /checkuptodate=expandedonly")
@@ -1096,14 +1096,14 @@ Method DrawUDL(ClassName = "")
 <Description>
 d ##class(%ZDev.Demo.demo7CopyFile).run()</Description>
 <Super>%RegisteredObject</Super>
-<TimeChanged>64980,26641.656019</TimeChanged>
+<TimeChanged>64980,28893.434594</TimeChanged>
 <TimeCreated>64937,56823.693255</TimeCreated>
 
 <Method name="run">
 <ClassMethod>1</ClassMethod>
 <Implementation><![CDATA[
    	s ConnectObject=##class(%ZDev.Client).%New()
-    if obj.Connect("test1234",6030,"_SYSTEM","SYS","USER",.Error)=1 {
+    if ConnectObject.Connect("test1234",6030,"_SYSTEM","SYS","USER",.Error)=1 {
 	     s FileNameFromSrv="c:\InterSystems\Cache\bin\mdesigner.exe"
 	     s FileNameToLocal="c:\InterSystems\Cache\bin\mdesigner.exe"
          d ConnectObject.CopyFile(FileNameFromSrv,FileNameToLocal,.Error,1)
