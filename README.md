@@ -18,11 +18,11 @@
 <h3>Копировать глобал с удаленной БД(UTF8 to UNICODE)</h3>
  <pre>
    s ConnectObject=##class(%ZDev.Client).%New()
-   if obj.Connect("test1234",6030,"_SYSTEM","SYS","USER",.Error)=1 {
+   if ConnectObject.Connect("test1234",6030,"_SYSTEM","SYS","USER",.Error)=1 {
       d ConnectObject.ImportGlobal( "^Refs.AllBazeD", .Error ,1)
    } else{
       zw Error	
    }
    d ConnectObject.DisConnect()
-   s obj=""
+   s ConnectObject=""
   </pre>
