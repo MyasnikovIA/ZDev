@@ -15,7 +15,7 @@
 
 Пример использования находится в пакете %ZDev.Demo (%ZDev.XML)
 
-<h3>Копировать глобал с удалённой БД</h3>
+<h3>Копировать глобал с удаленной БД(UTF8 to UNICODE)</h3>
  <pre>
    s ConnectObject=##class(%ZDev.Client).%New()
    if obj.Connect("test1234",6030,"_SYSTEM","SYS","USER",.Error)=1 {
