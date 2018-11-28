@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Export generator="Cache" version="25" zv="Cache for Windows (x86-64) 2017.2 (Build 651)" ts="2018-11-28 07:09:39">
+<Export generator="Cache" version="25" zv="Cache for Windows (x86-64) 2017.2 (Build 651)" ts="2018-11-28 07:24:47">
 <Class name="%ZDev.Admin.ImportGlobal">
 <Description>
 d ##class(%ZDev.Admin.ImportGlobal).run()</Description>
 <Super>%RegisteredObject</Super>
-<TimeChanged>64980,25515.053082</TimeChanged>
+<TimeChanged>64980,26675.544211</TimeChanged>
 <TimeCreated>64937,42881.374751</TimeCreated>
 
 <Method name="run">
 <ClassMethod>1</ClassMethod>
-<FormalSpec>ServerName="ne1232",NameSpace="Sirena"</FormalSpec>
+<FormalSpec>ServerName="test1232",NameSpace="USER"</FormalSpec>
 <Implementation><![CDATA[
    	s ConnectObject=##class(%ZDev.Client).%New()
 	if ConnectObject.Connect(ServerName,6030,"_SYSTEM","SYS",NameSpace,.Error)=1 {
@@ -858,24 +858,14 @@ GetDirCSP(Dir)   ; s dd=$$GetDirCSP^test2("C:\!!Git\")
 <Description>
 d ##class(%ZDev.Demo.demo1EcecCmd).run()</Description>
 <Super>%RegisteredObject</Super>
-<TimeChanged>64959,28959.557585</TimeChanged>
+<TimeChanged>64980,26507.050649</TimeChanged>
 <TimeCreated>64935,35249.814269</TimeCreated>
 
 <Method name="run">
 <ClassMethod>1</ClassMethod>
 <Implementation><![CDATA[
-	; ne1233:6040  - 10.100.12.34
-	; ne150 :6030  - 10.100.12.11
-	; ne1234:6030  - 10.100.12.21
-	; ne1232:6030  - 10.100.12.23
-	; nsk-s-zhkh:6030-10.100.12.31
-
 	s obj=##class(%ZDev.Client).%New()
-	
-	// if obj.Connect("ne140",6030,"_SYSTEM","SYS","Sirena",.Error)=1 {
-	// if obj.Connect("ne1232",6030,"IRISUserDev","IRISUserDev","Sirena",.Error)=1 {
-    // if obj.Connect("10.100.12.31",6030,"IRISUserDev","IRISUserDev","FIAS",.Error)=1 {
-	if obj.Connect("nsk-s-zhkh",6030,"IRISUserDev","IRISUserDev","FIAS",.Error)=1 {
+	if obj.Connect("nsk-zhkh",6030,"_SYSTEM","SYS","USER",.Error)=1 {
 	    d obj.Push("ip")
         w !,obj.ReadLine()
         d obj.Push(" w ""_1111111_""_$ZDT($h)")
@@ -896,14 +886,14 @@ d ##class(%ZDev.Demo.demo1EcecCmd).run()</Description>
 <Description>
 d ##class(%ZDev.Demo.demo2RunMethod).run()</Description>
 <Super>%RegisteredObject</Super>
-<TimeChanged>64972,39549.438318</TimeChanged>
+<TimeChanged>64980,26535.128879</TimeChanged>
 <TimeCreated>64935,35400.740092</TimeCreated>
 
 <Method name="run">
 <ClassMethod>1</ClassMethod>
 <Implementation><![CDATA[
 	s obj=##class(%ZDev.Client).%New()
-    if obj.Connect("ne1234",6030,"IRISUserDev","SYS","Sirena",.Error)=1 {
+    if obj.Connect("test1234",6030,"_SYSTEM","SYS","USER",.Error)=1 {
 	   
 	    d obj.RunClassMethod(##this,"GetTime",.Error,$zu(5) ) 
 	    s AtEnd=0
@@ -981,19 +971,16 @@ d ##class(%ZDev.Demo.demo3GetObject).run()</Description>
 <Description>
 d ##class(%ZDev.Demo.demo4SqlQuery).run()</Description>
 <Super>%RegisteredObject</Super>
-<TimeChanged>64960,55992.811701</TimeChanged>
+<TimeChanged>64980,26594.712093</TimeChanged>
 <TimeCreated>64935,35671.781892</TimeCreated>
 
 <Method name="run">
 <ClassMethod>1</ClassMethod>
 <Implementation><![CDATA[
 	s obj=##class(%ZDev.Client).%New()
-	// if obj.Connect("192.168.1.100",6006,"_SYSTEM","SYS","USER",.Error)=1 {
-	if obj.Connect("nsk-s-zhkh",6030,"IRISUserDev","IRISUserDev","FIAS",.Error)=1 {		
+	if obj.Connect("test1234",6030,"_SYSTEM","SYS","USER",.Error)=1 {
 	    w !,"========== SQL =============",!
-	     ; s resQieryStatus=obj.SqlExec(,"call FIAS_Search.House_ByAOGuidWithNum('fa4b8fdc-0185-473c-b316-7f4c5072b1cb', '208')", .Error )
 	    s SQLTxt=" select top 10  AOGUID,SHORTNAME from FIAS.Object  where ACTSTATUS = 1  and AOLEVEL = 7 and REGIONCODE ='54'   and SHORTNAME = 'ул' "
-        ; s SQLTxt="call FIAS_Search.AddressObject_ByQNameWithLevel('54',7 , 'рылеева', 'ул' )"
 	    s resQieryStatus=obj.SqlExec(,SQLTxt, .Error )
 	    if resQieryStatus=1 {
 		   while obj.SqlNextRaw(, .Error)=1 {
@@ -1005,9 +992,8 @@ d ##class(%ZDev.Demo.demo4SqlQuery).run()</Description>
 		     zw raw
 		   }  
 		 }
-	    
-	    zw Error
-	    w !,"========== === =============",!
+ 	     zw Error
+	     w !,"========== === =============",!
 	}else{
 	  zw Error	
 	}
@@ -1022,7 +1008,7 @@ d ##class(%ZDev.Demo.demo4SqlQuery).run()</Description>
 <Description>
 d ##class(%ZDev.Demo.demo5CopyGlobal).run()</Description>
 <Super>%RegisteredObject</Super>
-<TimeChanged>64937,51737.629879</TimeChanged>
+<TimeChanged>64980,26612.383381</TimeChanged>
 <TimeCreated>64935,38007.667599</TimeCreated>
 
 <Method name="run">
@@ -1030,7 +1016,7 @@ d ##class(%ZDev.Demo.demo5CopyGlobal).run()</Description>
 <Implementation><![CDATA[
 	
 	s ConnectObject=##class(%ZDev.Client).%New()
-   if ConnectObject.Connect("ne1234",6030,"IRISUserDev","SYS","Sirena",.Error)=1 {
+   if obj.Connect("test1234",6030,"_SYSTEM","SYS","USER",.Error)=1 {
        d ConnectObject.ImportGlobal( "^Refs.AllBazeD", .Error ,1)
     } else{
 	  zw Error	
@@ -1046,16 +1032,15 @@ d ##class(%ZDev.Demo.demo5CopyGlobal).run()</Description>
 <Description>
 d ##class(%ZDev.Demo.demo6CopyClass).run()</Description>
 <Super>%RegisteredObject</Super>
-<TimeChanged>64937,60253.053082</TimeChanged>
+<TimeChanged>64980,26626.511612</TimeChanged>
 <TimeCreated>64935,67291.868626</TimeCreated>
 
 <Method name="run">
 <ClassMethod>1</ClassMethod>
 <Implementation><![CDATA[
    	s ConnectObject=##class(%ZDev.Client).%New()
-	if ConnectObject.Connect("ne1234",6030,"IRISUserDev","SYS","Sirena",.Error)=1 {
+	if obj.Connect("test1234",6030,"_SYSTEM","SYS","USER",.Error)=1 {
 	   s ClassName="Developper.UtilTools.ClassFromDir"
-
        d ConnectObject.ImportClass(ClassName, .Error)
        Do $system.OBJ.Compile(ClassName,"cuk /checkuptodate=expandedonly")
        zw Error
@@ -1111,25 +1096,18 @@ Method DrawUDL(ClassName = "")
 <Description>
 d ##class(%ZDev.Demo.demo7CopyFile).run()</Description>
 <Super>%RegisteredObject</Super>
-<TimeChanged>64960,33328.62284</TimeChanged>
+<TimeChanged>64980,26641.656019</TimeChanged>
 <TimeCreated>64937,56823.693255</TimeCreated>
 
 <Method name="run">
 <ClassMethod>1</ClassMethod>
 <Implementation><![CDATA[
    	s ConnectObject=##class(%ZDev.Client).%New()
-	if ConnectObject.Connect("nsk-s-zhkh",6030,"IRISUserDev","IRISUserDev","user",.Error)=1 {
-	     
-	     s FileNameFromSrv="c:\InterSystems\Cache\bin\mplayer.exe"
-	     s FileNameToLocal="c:\InterSystems\Cache\bin\mplayer.exe"
-         d ConnectObject.CopyFile(FileNameFromSrv,FileNameToLocal,.Error,1)
-         zw Error
-
+    if obj.Connect("test1234",6030,"_SYSTEM","SYS","USER",.Error)=1 {
 	     s FileNameFromSrv="c:\InterSystems\Cache\bin\mdesigner.exe"
 	     s FileNameToLocal="c:\InterSystems\Cache\bin\mdesigner.exe"
          d ConnectObject.CopyFile(FileNameFromSrv,FileNameToLocal,.Error,1)
          zw Error
-         
 	}else{
 	  zw Error	
 	}
